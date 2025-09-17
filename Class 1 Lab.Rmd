@@ -1,0 +1,119 @@
+---
+title: "week1lab"
+output: html_document
+date: "2025-08-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Reading data
+
+1. Import class one survey data from our Github site (https://github.com/kijohnson/Advanced-Data-Analysis) (The dataset is called ‘Class 1 Survey Fall 2025 2.csv’), calling the R dataframe that you create C1survey.
+
+```{r}
+#reading in csv from github with read.csv
+df <- read.csv("https://github.com/kijohnson/Advanced-Data-Analysis/raw/refs/heads/main/Class%201%20Survey%20Fall%202025%202.csv")
+
+```
+
+2. Determine: a. the number of observations (i.e. the number of people who filled out the survey) and b. the number of variables in the dataframe.
+
+```{r}
+#part a and b 
+dim(df)
+
+```
+3. a. Rename the column variables to something shorter and that is descriptive of what the variable is about (for example like_dogs for the ‘Do you like dogs?’ question variable) and b. Display that they are renamed. Hints: You can use either the rename_with function or the names function. The list of names for time is:
+
+“id”, “like_cats”, “like_dogs”, “have_desert”, “slogan”, “fav_day”, “larkORowl”, “fav_food”, “fav_drink”, “fav_season”, “fav_month”, “hobby”, “program”, “specialization”, “stat_software”, “R_exp”, “coding_comfort”, “coding_length”, “top_three”, “public_health_interest”, “fav_num”, “bday”, “bmonth”, “country”, “state”, “city”, “highest_educ_level”
+
+
+install.packages("rename_with")
+
+```{r}
+#install.packages("tidyverse")
+#install.packages("dplyr")
+library(dplyr)
+
+colnames(df)
+colnames(df)[1:27] <- c("id", "like_cats", "like_dogs", "have_desert", "slogan",
+                        "fav_day", "larkORowl", "fav_food", "fav_drink",
+                        "fav_season", "fav_month", "hobby", "program",
+                        "specialization", "stat_software", "R_exp",
+                        "coding_comfort", "coding_length", "top_three",
+                        "public_health_interest", "fav_num", "bday", "bmonth",
+                        "country", "state", "city", "highest_educ_level")
+```
+
+
+```{R}
+colnames(df)
+```
+
+4. Write code to determine and display the number of factor, integer, numerical, and character variables there are in the C1survey dataset. Suggestion: Try to ask ChatGPT for a solution if you are unsure. There is a really short answer to this but we want to see what students come up with!
+```{r}
+sapply(df, class) |> 
+  table()
+```
+
+5. a. Using code, check the bday and bmonth variables for any unusual or missing values (hint: use table function). If you find any, b. describe what you will do with the unusual values in a comment before or immediately following the code that does it, and c. after you have cleaned up any unusual values, find the median bday and month. *Note: please make sure that your bday and month variables are numeric before doing statistics
+
+```{r}
+table(df$bday, useNA = "ifany")
+table(df$bmonth, useNA = "ifany")
+
+# Any values outside the valid ranges (1–31 for days, 1–12 for months) are recoded as NA
+df$bday[!(df$bday %in% 1:31)] <- NA  
+df$bmonth[!(df$bmonth %in% 1:12)] <- NA
+
+df$bday   <- as.numeric(df$bday)
+df$bmonth <- as.numeric(df$bmonth)
+
+median_bday   <- median(df$bday, na.rm = TRUE)
+median_bmonth <- median(df$bmonth, na.rm = TRUE)
+
+median_bday
+median_bmonth
+```
+
+6. a. Create a new variable called bseason that gives the season according to Northern Meteorological season in which respondents were born (winter = 12/1 to 2/29, spring = 3/1 to 5/31, summer = 6/1 to 8/31, fall = 9/1 to 11/30). b. Using the table function, print a table of Seasons in the columns and bmonths in the rows that allows you to check that the coding is correct c. Sum the columns using the addmargins function to answer the question of how many classmates were born in each season? Include your answer in the code.
+
+```{r}
+# a. Create a new variable bseason according to Northern Meteorological seasons
+df$bseason <- with(df,
+  ifelse(bmonth %in% c(12, 1, 2),  "Winter",
+  ifelse(bmonth %in% 3:5,          "Spring",
+  ifelse(bmonth %in% 6:8,          "Summer",
+  ifelse(bmonth %in% 9:11,         "Fall", NA))))
+)
+
+# b. Cross-tab bmonth vs bseason to verify coding
+table(df$bmonth, df$bseason)
+
+# c. Add margins (totals for each season)
+addmargins(table(df$bmonth, df$bseason))
+```
+
+7. Pick your favorite variable or variables to analyze, come up with a question you want to answer with that variable or variables, generate the code, and provide an answer to your question. Describe what you did using comments (i.e. #’s).
+```{r}
+# Question: Do more classmates like cats, dogs, or both?
+
+# Step 1: Create a new variable that captures pet preference
+df$pet_pref <- with(df,
+  ifelse(like_cats == 1 & like_dogs == 1, "Both",
+  ifelse(like_cats == 1 & like_dogs == 0, "Cats only",
+  ifelse(like_cats == 0 & like_dogs == 1, "Dogs only", "Neither"))))
+
+# Step 2: Generate a frequency table of responses
+pet_table <- table(df$pet_pref)
+
+# Step 3: Print results
+pet_table
+
+# Step 4: Find which category is most common
+most_common <- names(which.max(pet_table))
+cat("The most common preference is:", most_common, "with", max(pet_table), "students.\n")
+
+```
